@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Property Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@700&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & Base ─────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #F7F6F2;
+  --surface: #FFFFFF;
+  --surface2: #F0EEE8;
+  --border: #E2DED6;
+  --border2: #CCC9C0;
+  --text: #1A1916;
+  --text2: #6B6860;
+  --text3: #9E9B94;
+  --accent: #2A5CFF;
+  --accent-bg: #EEF2FF;
+  --green: #1A7A4A;
+  --green-bg: #E8F5EE;
+  --amber: #92540A;
+  --amber-bg: #FEF3E2;
+  --red: #8B1D1D;
+  --red-bg: #FDEAEA;
+  --purple: #4B2EA6;
+  --purple-bg: #EEE9FF;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.06);
+}
+html { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.5; }
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; }
+input, select, textarea { font-family: inherit; font-size: 13px; }
+
+/* ── Layout ───────────────────────────────────────────────────────────────── */
+.container { max-width: 960px; margin: 0 auto; padding: 0 20px 80px; }
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+.header { padding: 28px 0 24px; border-bottom: 1px solid var(--border); margin-bottom: 28px; display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.header-left h1 { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 700; letter-spacing: -0.5px; color: var(--text); }
+.header-left p { font-size: 13px; color: var(--text3); margin-top: 2px; }
+.header-stats { display: flex; gap: 24px; }
+.hstat { text-align: right; }
+.hstat-num { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; color: var(--text); line-height: 1; }
+.hstat-label { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+/* ── Section headers ──────────────────────────────────────────────────────── */
+.section-label { font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--text3); margin-bottom: 10px; }
+
+/* ── Add panel ────────────────────────────────────────────────────────────── */
+.add-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 20px; box-shadow: var(--shadow); }
+.add-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.add-row input { flex: 1; min-width: 200px; padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); font-size: 13px; transition: border-color .15s; }
+.add-row input:focus { outline: none; border-color: var(--accent); }
+.add-row input::placeholder { color: var(--text3); }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; border: 1px solid transparent; transition: all .15s; white-space: nowrap; }
+.btn-primary { background: var(--text); color: #fff; border-color: var(--text); }
+.btn-primary:hover { background: #333; }
+.btn-secondary { background: var(--surface2); color: var(--text); border-color: var(--border); }
+.btn-secondary:hover { background: var(--border); }
+.btn-ghost { background: transparent; color: var(--text2); border-color: var(--border); }
+.btn-ghost:hover { background: var(--surface2); color: var(--text); }
+.fetch-hint { font-size: 11px; color: var(--text3); margin-top: 8px; }
+.waiting-banner { display: none; margin-top: 10px; background: var(--accent-bg); border: 1px solid #C7D4FF; border-radius: var(--radius-sm); padding: 8px 12px; font-size: 12px; color: var(--accent); align-items: center; gap: 8px; }
+.waiting-banner.show { display: flex; }
+
+/* ── Search panel ─────────────────────────────────────────────────────────── */
+.search-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 20px; box-shadow: var(--shadow); overflow: hidden; }
+.search-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 13px 18px; background: none; border: none; cursor: pointer; color: var(--text); font-size: 13px; font-weight: 500; }
+.search-toggle:hover { background: var(--surface2); }
+.search-toggle-left { display: flex; align-items: center; gap: 8px; color: var(--text2); }
+.toggle-arrow { font-size: 11px; color: var(--text3); transition: transform .2s; }
+.toggle-arrow.open { transform: rotate(180deg); }
+.search-body { display: none; padding: 16px 18px; border-top: 1px solid var(--border); }
+.search-body.open { display: block; }
+.portal-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 14px; }
+.ptab { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 10px 6px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; position: relative; transition: all .15s; }
+.ptab:hover { background: var(--surface2); border-color: var(--border2); }
+.ptab.active { border: 2px solid var(--accent); background: var(--accent-bg); }
+.ptab.active .ptn { color: var(--accent); font-weight: 600; }
+.ptick { position: absolute; top: 4px; right: 4px; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); display: none; align-items: center; justify-content: center; }
+.ptab.active .ptick { display: flex; }
+.ptick svg { width: 8px; height: 8px; stroke: #fff; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.plogo { width: 28px; height: 28px; border-radius: 6px; }
+.ptn { font-size: 10px; color: var(--text2); text-align: center; line-height: 1.3; }
+.s2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.sfield { display: flex; flex-direction: column; gap: 3px; }
+.sfield label { font-size: 11px; color: var(--text3); font-weight: 500; }
+.sfield select { padding: 7px 9px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); }
+.sdivider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+.sresults { display: flex; flex-direction: column; gap: 6px; }
+.sresult-row { display: flex; align-items: center; justify-content: space-between; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 12px; }
+.sresult-name { font-size: 12px; font-weight: 500; color: var(--text); display: flex; align-items: center; gap: 6px; }
+.sresult-btns { display: flex; gap: 6px; }
+.sbtn { font-size: 11px; padding: 4px 11px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; color: var(--text2); display: inline-flex; align-items: center; gap: 4px; transition: all .15s; }
+.sbtn:hover { background: var(--surface2); color: var(--text); }
+.sbtn.open { background: var(--accent-bg); color: var(--accent); border-color: #C7D4FF; }
+.sbtn.copied { background: var(--green-bg); color: var(--green); border-color: #A8D9BC; }
+.open-all-btn { width: 100%; margin-top: 10px; padding: 9px; font-size: 12px; font-weight: 500; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface2); color: var(--text); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: background .15s; }
+.open-all-btn:hover { background: var(--border); }
+.open-all-btn:disabled { opacity: 0.35; cursor: default; }
+.sempty { text-align: center; padding: 14px; color: var(--text3); font-size: 12px; border: 1px dashed var(--border); border-radius: var(--radius-sm); }
+.sel-count { font-size: 11px; color: var(--text3); margin-bottom: 10px; }
+.sel-info { color: var(--accent); font-weight: 600; }
+
+/* ── Controls bar ─────────────────────────────────────────────────────────── */
+.controls { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
+.filter-btn { font-size: 12px; padding: 5px 13px; border: 1px solid var(--border); border-radius: 20px; background: var(--surface); cursor: pointer; color: var(--text2); font-weight: 400; transition: all .15s; }
+.filter-btn:hover { background: var(--surface2); }
+.filter-btn.active { background: var(--text); color: #fff; border-color: var(--text); font-weight: 500; }
+.sort-select { margin-left: auto; font-size: 12px; padding: 5px 9px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); }
+.map-link { font-size: 12px; padding: 5px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text2); display: inline-flex; align-items: center; gap: 5px; transition: all .15s; }
+.map-link:hover { background: var(--surface2); color: var(--text); }
+
+/* ── Board ────────────────────────────────────────────────────────────────── */
+.board { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; }
+.empty-state { text-align: center; padding: 48px 16px; color: var(--text3); font-size: 13px; grid-column: 1/-1; }
+.empty-state-icon { font-size: 32px; margin-bottom: 10px; }
+
+/* ── Card ─────────────────────────────────────────────────────────────────── */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow); transition: box-shadow .15s, border-color .15s; }
+.card:hover { box-shadow: var(--shadow-md); border-color: var(--border2); }
+.card.new-card { border-color: #A8D9BC; animation: fadeUp .4s ease; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+.card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.card-source { font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 4px; }
+.badge { font-size: 10px; font-weight: 500; padding: 2px 9px; border-radius: 20px; white-space: nowrap; }
+.b-spotted { background: var(--accent-bg); color: var(--accent); }
+.b-enquired { background: var(--purple-bg); color: var(--purple); }
+.b-viewing { background: var(--amber-bg); color: var(--amber); }
+.b-applied { background: var(--green-bg); color: var(--green); }
+.b-rejected { background: var(--red-bg); color: var(--red); }
+.b-withdrawn { background: var(--surface2); color: var(--text2); }
+.card-addr { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.35; margin-bottom: 4px; }
+.card-price { font-size: 18px; font-weight: 700; font-family: 'Syne', sans-serif; color: var(--text); margin-bottom: 8px; }
+.card-price span { font-size: 12px; font-weight: 400; font-family: 'Inter', sans-serif; color: var(--text3); }
+.match-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; margin-bottom: 10px; }
+.m-strong { background: var(--green-bg); color: var(--green); }
+.m-good { background: var(--accent-bg); color: var(--accent); }
+.m-decent { background: var(--amber-bg); color: var(--amber); }
+.m-weak { background: var(--red-bg); color: var(--red); }
+.m-fail { background: var(--surface2); color: var(--text2); }
+.m-none { background: var(--surface2); color: var(--text3); }
+.card-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.meta-item { font-size: 11px; color: var(--text2); display: flex; align-items: center; gap: 4px; }
+.card-desc { font-size: 12px; color: var(--text2); line-height: 1.55; border-top: 1px solid var(--border); padding-top: 8px; margin-top: 4px; }
+.card-viewing { font-size: 11px; color: var(--amber); background: var(--amber-bg); padding: 3px 9px; border-radius: 20px; margin-top: 8px; display: inline-flex; align-items: center; gap: 5px; font-weight: 500; }
+.card-actions { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+.card-actions button, .card-actions a { font-size: 11px; padding: 4px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: transparent; cursor: pointer; color: var(--text2); display: inline-flex; align-items: center; gap: 4px; text-decoration: none; transition: all .15s; }
+.card-actions button:hover, .card-actions a:hover { background: var(--surface2); color: var(--text); border-color: var(--border2); }
+.del-btn { color: var(--red) !important; border-color: #F5C4C4 !important; }
+.del-btn:hover { background: var(--red-bg) !important; }
+
+/* ── Modal ────────────────────────────────────────────────────────────────── */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow-y: auto; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 24px; width: 100%; max-width: 460px; box-shadow: var(--shadow-md); }
+.modal h3 { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 18px; color: var(--text); }
+.field { margin-bottom: 12px; }
+.field label { display: block; font-size: 11px; font-weight: 600; color: var(--text3); letter-spacing: .04em; text-transform: uppercase; margin-bottom: 4px; }
+.field input, .field select, .field textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); font-size: 13px; transition: border-color .15s; }
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--accent); }
+.field textarea { resize: vertical; min-height: 65px; line-height: 1.5; }
+.field2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.modal-divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+.modal-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+.modal-btns button { padding: 8px 20px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; border: 1px solid var(--border); cursor: pointer; transition: all .15s; }
+.btn-save { background: var(--text); color: #fff; border-color: var(--text); }
+.btn-save:hover { background: #333; }
+.btn-cancel { background: transparent; color: var(--text2); }
+.btn-cancel:hover { background: var(--surface2); }
+
+/* ── Icons (inline SVG helpers) ──────────────────────────────────────────── */
+.ico { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+.ico-sm { width: 11px; height: 11px; }
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .header { flex-direction: column; align-items: flex-start; }
+  .header-stats { gap: 16px; }
+  .portal-grid { grid-template-columns: repeat(3, 1fr); }
+  .s2col { grid-template-columns: 1fr; }
+  .board { grid-template-columns: 1fr; }
+  .field2 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <h1>Property Tracker</h1>
+      <p>St Albans &amp; surrounding · 2–3 bed · up to £2,000/mo</p>
+    </div>
+    <div class="header-stats" id="header-stats"></div>
+  </header>
+
+  <!-- Add property panel -->
+  <div class="add-panel">
+    <div class="section-label">Add property</div>
+    <div class="add-row">
+      <input id="paste-url" placeholder="Paste a Rightmove, Zoopla, OnTheMarket, OpenRent or PrimeLocation URL…" onkeydown="if(event.key==='Enter')doFetch()" />
+      <button class="btn btn-primary" onclick="doFetch()">
+        <svg class="ico" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M22 2 12 12M15 2h7v7"/></svg>
+        Fetch &amp; score
+      </button>
+      <button class="btn btn-ghost" onclick="openManual()">
+        <svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        Add manually
+      </button>
+    </div>
+    <div class="waiting-banner" id="waiting-banner">
+      <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      Fetching listing — Claude will respond in the chat tab. The card will be added automatically.
+    </div>
+    <div class="fetch-hint" id="fetch-hint">Claude fetches the listing, scores it against your criteria, and creates the card automatically.</div>
+  </div>
+
+  <!-- Search portals panel -->
+  <div class="search-panel">
+    <button class="search-toggle" onclick="toggleSearch(this)">
+      <span class="search-toggle-left">
+        <svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        Search portals
+      </span>
+      <svg class="ico toggle-arrow" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <div class="search-body" id="search-body">
+      <div class="sel-count" id="sel-count">Select one or more portals to search</div>
+      <div class="portal-grid">
+        <div class="ptab" onclick="tp('rightmove',this)">
+          <div class="ptick"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <svg class="plogo" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#00DEB6"/><path d="M8 14L16 8L24 14L24 22L8 22Z" fill="none" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/><rect x="13" y="17" width="6" height="5" fill="#fff"/></svg>
+          <div class="ptn">Rightmove</div>
+        </div>
+        <div class="ptab" onclick="tp('zoopla',this)">
+          <div class="ptick"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <svg class="plogo" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#8E44FF"/><circle cx="16" cy="14" r="5" fill="none" stroke="#fff" stroke-width="2"/><line x1="16" y1="19" x2="16" y2="24" stroke="#fff" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="24" x2="20" y2="24" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+          <div class="ptn">Zoopla</div>
+        </div>
+        <div class="ptab" onclick="tp('otm',this)">
+          <div class="ptick"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <svg class="plogo" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#E8F4FD"/><text x="16" y="19" text-anchor="middle" font-family="Arial,sans-serif" font-size="8" font-weight="800" fill="#0066CC">OTM</text><rect x="8" y="8" width="6" height="6" rx="1" fill="#0066CC" opacity="0.7"/><rect x="18" y="8" width="6" height="6" rx="1" fill="#0066CC" opacity="0.7"/></svg>
+          <div class="ptn">OnTheMarket</div>
+        </div>
+        <div class="ptab" onclick="tp('openrent',this)">
+          <div class="ptick"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <svg class="plogo" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#1A1A2E"/><path d="M16 8L22 13L22 22L10 22L10 13Z" fill="none" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/><rect x="13.5" y="16" width="5" height="6" rx="0.5" fill="#fff"/><path d="M8 14L16 8L24 14" fill="none" stroke="#4FC3F7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <div class="ptn">OpenRent</div>
+        </div>
+        <div class="ptab" onclick="tp('primelocation',this)">
+          <div class="ptick"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <svg class="plogo" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#003366"/><text x="16" y="15" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" font-weight="800" fill="#FFD700">PRIME</text><text x="16" y="23" text-anchor="middle" font-family="Arial,sans-serif" font-size="7" font-weight="800" fill="#fff">LOCATION</text></svg>
+          <div class="ptn">PrimeLocation</div>
+        </div>
+      </div>
+      <div class="s2col">
+        <div class="sfield"><label>Location</label>
+          <select id="sloc" onchange="bsu()"><option value="st-albans">St Albans</option><option value="watford">Watford</option><option value="bushey">Bushey</option><option value="radlett">Radlett</option><option value="borehamwood">Borehamwood</option><option value="hatfield">Hatfield</option><option value="barnet">Barnet</option><option value="mill-hill">Mill Hill</option><option value="kings-langley">Kings Langley</option><option value="park-street">Park Street</option><option value="welwyn-garden-city">Welwyn Garden City</option><option value="london-colney">London Colney</option></select>
+        </div>
+        <div class="sfield"><label>Radius</label>
+          <select id="srad" onchange="bsu()"><option value="0.25">0.25 miles</option><option value="0.5">0.5 miles</option><option value="1" selected>1 mile</option><option value="2">2 miles</option><option value="3">3 miles</option><option value="5">5 miles</option><option value="10">10 miles</option></select>
+        </div>
+      </div>
+      <div class="s2col">
+        <div class="sfield"><label>Min beds</label><select id="sminb" onchange="bsu()"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option></select></div>
+        <div class="sfield"><label>Max beds</label><select id="smaxb" onchange="bsu()"><option value="">Any</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div>
+      </div>
+      <div class="s2col">
+        <div class="sfield"><label>Min price</label><select id="sminp" onchange="bsu()"><option value="1000">£1,000</option><option value="1250">£1,250</option><option value="1400" selected>£1,400</option><option value="1500">£1,500</option><option value="1750">£1,750</option></select></div>
+        <div class="sfield"><label>Max price</label><select id="smaxp" onchange="bsu()"><option value="1500">£1,500</option><option value="1750">£1,750</option><option value="2000" selected>£2,000</option><option value="2500">£2,500</option><option value="3000">£3,000</option></select></div>
+      </div>
+      <div class="sfield" style="margin-bottom:12px"><label>Property type</label><select id="stype" onchange="bsu()"><option value="any">Any</option><option value="house">House</option><option value="flat">Flat</option></select></div>
+      <hr class="sdivider">
+      <div class="sresults" id="sresults"><div class="sempty">Select portals above to generate search links</div></div>
+      <button class="open-all-btn" id="oall" onclick="openAll()" disabled>Open all selected in new tabs</button>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="filter-btn active" onclick="setFilter(this,'all')">All</button>
+    <button class="filter-btn" onclick="setFilter(this,'Spotted')">Spotted</button>
+    <button class="filter-btn" onclick="setFilter(this,'Enquired')">Enquired</button>
+    <button class="filter-btn" onclick="setFilter(this,'Viewing booked')">Viewing booked</button>
+    <button class="filter-btn" onclick="setFilter(this,'Applied')">Applied</button>
+    <button class="filter-btn" onclick="setFilter(this,'Rejected')">Rejected</button>
+    <a class="map-link" id="map-all-link" href="#" target="_blank" rel="noopener">
+      <svg class="ico ico-sm" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      Map all
+    </a>
+    <select class="sort-select" onchange="csort=this.value;renderBoard()">
+      <option value="date">Newest first</option>
+      <option value="score">Best match first</option>
+      <option value="price_asc">Price: low–high</option>
+      <option value="price_desc">Price: high–low</option>
+    </select>
+  </div>
+
+  <!-- Board -->
+  <div class="board" id="board"></div>
+</div>
+
+<!-- Edit / Add modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h3 id="modal-title">Add property</h3>
+    <div class="field"><label>Address</label><input id="fa" placeholder="e.g. 14 Elm Close, St Albans AL1 2XY" /></div>
+    <div class="field2">
+      <div class="field" style="margin-bottom:0"><label>Rent (£/mo)</label><input id="fp" type="number" placeholder="1800" /></div>
+      <div class="field" style="margin-bottom:0"><label>Status</label><select id="fst"><option>Spotted</option><option>Enquired</option><option>Viewing booked</option><option>Applied</option><option>Rejected</option><option>Withdrawn</option></select></div>
+    </div>
+    <hr class="modal-divider">
+    <div class="field2">
+      <div class="field" style="margin-bottom:0"><label>Beds</label><select id="fb"><option value="">—</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></div>
+      <div class="field" style="margin-bottom:0"><label>Baths</label><select id="fbt"><option value="">—</option><option value="1">1</option><option value="2">2</option><option value="3">3+</option></select></div>
+    </div>
+    <div class="field2" style="margin-top:10px">
+      <div class="field" style="margin-bottom:0"><label>Type</label><select id="fty"><option value="">—</option><option value="house">House</option><option value="flat">Flat</option><option value="maisonette">Maisonette</option><option value="other">Other</option></select></div>
+      <div class="field" style="margin-bottom:0"><label>Parking</label><select id="fpk"><option value="">—</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+    </div>
+    <div class="field2" style="margin-top:10px">
+      <div class="field" style="margin-bottom:0"><label>Outdoor</label><select id="fod"><option value="">—</option><option value="garden">Garden</option><option value="courtyard">Courtyard/balcony</option><option value="none">None</option></select></div>
+      <div class="field" style="margin-bottom:0"><label>Source</label><select id="fso"><option>Rightmove</option><option>Zoopla</option><option>OnTheMarket</option><option>OpenRent</option><option>PrimeLocation</option><option>Agent direct</option><option>Other</option></select></div>
+    </div>
+    <div class="field2" style="margin-top:10px">
+      <div class="field" style="margin-bottom:0"><label>Town centre walk</label><select id="ftw"><option value="">—</option><option value="under10">Under 10 min</option><option value="10to20">10–20 min</option><option value="over20">Over 20 min</option></select></div>
+      <div class="field" style="margin-bottom:0"><label>Station walk</label><select id="fsw"><option value="">—</option><option value="under10">Under 10 min</option><option value="10to20">10–20 min</option><option value="over20">Over 20 min</option></select></div>
+    </div>
+    <hr class="modal-divider">
+    <div class="field"><label>Viewing date &amp; time</label><input id="fv" type="datetime-local" onchange="onViewingChange(this.value)" /></div>
+    <div class="field"><label>Listing URL</label><input id="fu" placeholder="https://…" /></div>
+    <div class="field2">
+      <div class="field" style="margin-bottom:0"><label>Photos URL</label><input id="fph" placeholder="https://…" /></div>
+      <div class="field" style="margin-bottom:0"><label>Floorplan URL</label><input id="ffl" placeholder="https://…" /></div>
+    </div>
+    <div class="field" style="margin-top:10px"><label>Description</label><textarea id="fd" placeholder="Summary of the property…"></textarea></div>
+    <div class="field"><label>Your notes</label><textarea id="fn" placeholder="Questions to ask, gut feel, things to check…"></textarea></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" id="modal-save-btn" onclick="saveModal()">Add property</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Data ───────────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'pt_v1';
+
+function loadProps() {
+  try { const r = localStorage.getItem(STORAGE_KEY); return r ? JSON.parse(r) : defaultProps(); }
+  catch(e) { return defaultProps(); }
+}
+function saveProps() { localStorage.setItem(STORAGE_KEY, JSON.stringify(props)); }
+
+function defaultProps() {
+  return [
+    {id:1,addr:'12 Maple Avenue, St Albans AL1',price:1950,beds:'3',baths:'1',type:'house',parking:'yes',outdoor:'garden',townwalk:'10to20',stationwalk:'10to20',source:'Rightmove',url:'',photos:'',floorplan:'',status:'Viewing booked',viewing:'2025-07-02T10:30',desc:'Well-presented 3-bed semi with rear garden and driveway parking. Recently redecorated.',notes:'Ask about broadband speed.',score:78,date:new Date('2025-06-20').getTime()},
+    {id:2,addr:'Flat 4, Victoria Street, St Albans AL1',price:1650,beds:'2',baths:'1',type:'flat',parking:'no',outdoor:'none',townwalk:'under10',stationwalk:'under10',source:'Zoopla',url:'',photos:'',floorplan:'',status:'Spotted',viewing:'',desc:'Compact 2-bed first floor flat in town centre. Fully fitted kitchen with white goods.',notes:'Confirm pet policy.',score:null,date:new Date('2025-06-21').getTime()},
+    {id:3,addr:'Cathedral Court, King Harry Lane, St Albans AL3',price:1850,beds:'2',baths:'1',type:'flat',parking:'yes',outdoor:'courtyard',townwalk:'10to20',stationwalk:'over20',source:'Rightmove',url:'https://www.rightmove.co.uk/properties/89290794',photos:'https://www.rightmove.co.uk/properties/89290794#/media?channel=RES_LET',floorplan:'',status:'Spotted',viewing:'',desc:'Spacious 2-bed ground floor apartment backing onto Verulamium Park. Garage included. Available unfurnished July 2026.',notes:'Beautiful park setting. Station is a hike — factor in commute.',score:61,date:new Date('2025-06-25').getTime()},
+    {id:4,addr:'London Road, St Albans AL1 1LJ',price:1800,beds:'2',baths:'2',type:'flat',parking:'yes',outdoor:'none',townwalk:'under10',stationwalk:'under10',source:'OpenRent',url:'https://www.openrent.co.uk/property-to-rent/st-albans/2-bed-flat-london-road-al1/2912362',photos:'https://www.openrent.co.uk/property-to-rent/st-albans/2-bed-flat-london-road-al1/2912362',floorplan:'',status:'Spotted',viewing:'',desc:'Well-presented 2-bed first floor apartment with two ensuite bathrooms and high-spec kitchen. 5 min walk to St Albans City station and 2 min to town centre. Allocated parking included.',notes:'Both bedrooms ensuite — great spec. No outdoor space.',score:74,date:new Date('2025-06-26').getTime()}
+  ];
+}
+
+let props = loadProps();
+let nid = props.length ? Math.max(...props.map(p=>p.id)) + 1 : 1;
+let cf = 'all', csort = 'date', eid = null, mm = 'add', pu = '';
+let sp = new Set(), bu = {};
+
+// ── Lookup tables ──────────────────────────────────────────────────────────
+const PN = {rightmove:'Rightmove',zoopla:'Zoopla',otm:'OnTheMarket',openrent:'OpenRent',primelocation:'PrimeLocation'};
+const PO = ['rightmove','zoopla','otm','openrent','primelocation'];
+const RM = {'st-albans':{id:'1244',slug:'St-Albans'},'watford':{id:'1408',slug:'Watford'},'bushey':{id:'259',slug:'Bushey'},'radlett':{id:'1108',slug:'Radlett'},'borehamwood':{id:'188',slug:'Borehamwood'},'hatfield':{id:'606',slug:'Hatfield'},'barnet':{id:'93929',slug:'Barnet'},'mill-hill':{id:'70364',slug:'Mill-Hill'},'kings-langley':{id:'744',searchLocation:'Kings+Langley%2C+Hertfordshire'},'park-street':{id:'19354',slug:'Park-Street'},'welwyn-garden-city':{id:'1419',slug:'Welwyn-Garden-City'},'london-colney':{id:'15889',slug:'London-Colney'}};
+const ZP = {'st-albans':{slug:'stalbans',q:'St.albans%2C%20Hertfordshire'},'watford':{slug:'hertfordshire/watford',q:'Watford%2C%20Hertfordshire'},'bushey':{slug:'bushey',q:'Bushey%2C%20Hertfordshire'},'radlett':{slug:'radlett',q:'Radlett%2C%20Hertfordshire'},'borehamwood':{slug:'borehamwood',q:'Borehamwood%2C%20Hertfordshire'},'hatfield':{slug:'hertfordshire/hatfield',q:'Hatfield%2C%20Hertfordshire'},'barnet':{slug:'barnet',q:'Barnet%2C%20Hertfordshire'},'mill-hill':{slug:'mill-hill',q:'Mill%20Hill%2C%20London'},'kings-langley':{slug:'kings-langley',q:'Kings%20Langley%2C%20Hertfordshire'},'park-street':{slug:'park-street',q:'Park%20Street%2C%20Hertfordshire'},'welwyn-garden-city':{slug:'welwyn-garden-city',q:'Welwyn%20Garden%20City%2C%20Hertfordshire'},'london-colney':{slug:'london-colney',q:'London%20Colney%2C%20Hertfordshire'}};
+const OTM = {'st-albans':'st-albans','watford':'watford','bushey':'bushey','radlett':'radlett','borehamwood':'borehamwood','hatfield':'hatfield','barnet':'barnet-north-london','mill-hill':'mill-hill','kings-langley':'kings-langley','park-street':'park-street','welwyn-garden-city':'welwyn-garden-city','london-colney':'london-colney'};
+const OR = {'st-albans':{slug:'st-albans-hertfordshire',term:'St%20Albans,%20Hertfordshire'},'watford':{slug:'watford-hertfordshire',term:'Watford,%20Hertfordshire'},'bushey':{slug:'bushey-hertfordshire',term:'Bushey,%20Hertfordshire'},'radlett':{slug:'radlett-hertfordshire',term:'Radlett,%20Hertfordshire'},'borehamwood':{slug:'borehamwood-hertfordshire',term:'Borehamwood,%20Hertfordshire'},'hatfield':{slug:'hatfield-hertfordshire',term:'Hatfield,%20Hertfordshire'},'barnet':{slug:'barnet-london',term:'Barnet,%20London'},'mill-hill':{slug:'mill-hill-london',term:'Mill%20Hill,%20London'},'kings-langley':{slug:'kings-langley-hertfordshire',term:'Kings%20Langley,%20Hertfordshire'},'park-street':{slug:'park-street-hertfordshire',term:'Park%20Street,%20Hertfordshire'},'welwyn-garden-city':{slug:'welwyn-garden-city-hertfordshire',term:'Welwyn%20Garden%20City,%20Hertfordshire'},'london-colney':{slug:'london-colney-hertfordshire',term:'London%20Colney,%20Hertfordshire'}};
+const PL = {'st-albans':{slug:'stalbans',q:'St.albans%2C%20Hertfordshire'},'watford':{slug:'hertfordshire/watford',q:'Watford%2C%20Hertfordshire'},'bushey':{slug:'bushey',q:'Bushey%2C%20Hertfordshire'},'radlett':{slug:'radlett',q:'Radlett%2C%20Hertfordshire'},'borehamwood':{slug:'borehamwood',q:'Borehamwood%2C%20Hertfordshire'},'hatfield':{slug:'hertfordshire/hatfield',q:'Hatfield%2C%20Hertfordshire'},'barnet':{slug:'barnet',q:'Barnet%2C%20Hertfordshire'},'mill-hill':{slug:'mill-hill',q:'Mill%20Hill%2C%20London'},'kings-langley':{slug:'kings-langley',q:'Kings%20Langley%2C%20Hertfordshire'},'park-street':{slug:'park-street',q:'Park%20Street%2C%20Hertfordshire'},'welwyn-garden-city':{slug:'welwyn-garden-city',q:'Welwyn%20Garden%20City%2C%20Hertfordshire'},'london-colney':{slug:'london-colney',q:'London%20Colney%2C%20Hertfordshire'}};
+
+// ── Scoring ────────────────────────────────────────────────────────────────
+function score(p) {
+  if (p.parking === 'no') return 0;
+  if (p.price > 2000) return 0;
+  let pts = 0, max = 0;
+  max += 25; if (p.price <= 1700) pts += 25; else if (p.price <= 1800) pts += 20; else if (p.price <= 1900) pts += 14; else pts += 8;
+  max += 20; if (p.beds === '3' || p.beds === '4') pts += 20; else if (p.beds === '2') pts += 12;
+  max += 12; if (p.type === 'house') pts += 12; else if (p.type === 'flat') pts += 8; else if (p.type === 'maisonette') pts += 5; else pts += 6;
+  max += 10; if (p.baths === '2' || p.baths === '3') pts += 10; else if (p.baths === '1') pts += 5;
+  max += 10; if (p.townwalk === 'under10') pts += 10; else if (p.townwalk === '10to20') pts += 6; else pts += 2;
+  max += 10; if (p.outdoor === 'garden') pts += 10; else if (p.outdoor === 'courtyard') pts += 6;
+  max += 8;  if (p.stationwalk === 'under10') pts += 8; else if (p.stationwalk === '10to20') pts += 5; else pts += 2;
+  return Math.round((pts / max) * 100);
+}
+
+// ── Fetch & score flow ────────────────────────────────────────────────────
+function doFetch() {
+  const url = document.getElementById('paste-url').value.trim();
+  if (!url) { document.getElementById('fetch-hint').textContent = 'Please paste a listing URL first.'; return; }
+  pu = url;
+  document.getElementById('waiting-banner').classList.add('show');
+  document.getElementById('fetch-hint').textContent = '';
+  // sendPrompt fires message into Claude chat — response triggers trackerFill
+  if (typeof sendPrompt === 'function') {
+    sendPrompt(`TRACKER_FETCH\nURL: ${url}\n\nFetch this listing and return ONLY these lines, no other text:\nADDRESS: [full address with postcode]\nPRICE: [monthly rent integer]\nBEDS: [integer]\nBATHS: [integer]\nTYPE: [house/flat/maisonette/other]\nPARKING: [yes/no/unknown]\nOUTDOOR: [garden/courtyard/none/unknown]\nTOWNWALK: [under10/10to20/over20/unknown]\nSTATIONWALK: [under10/10to20/over20/unknown]\nPHOTOS_URL: [URL or blank]\nFLOORPLAN_URL: [URL or blank]\nDESCRIPTION: [2-3 sentence summary]\nSCORE: [0-100]\nFILL_COMPLETE`);
+  } else {
+    // Standalone mode — show hint to paste URL into Claude chat manually
+    document.getElementById('waiting-banner').classList.remove('show');
+    document.getElementById('fetch-hint').textContent = 'Copy the URL and paste it into your Claude chat tab with "fetch this listing for my tracker" — Claude will respond and the card will appear here.';
+  }
+}
+
+window.trackerFill = function(raw) {
+  const d = {};
+  raw.split('\n').forEach(l => { const m = l.match(/^([A-Z_]+):\s*(.*)$/); if (m) d[m[1]] = (m[2] || '').trim(); });
+  if (!d.ADDRESS) return false;
+  const pk = (d.PARKING || '').toLowerCase();
+  const od = (d.OUTDOOR || '').toLowerCase();
+  const p = {
+    addr: d.ADDRESS, price: parseInt(d.PRICE) || 0, beds: d.BEDS || '', baths: d.BATHS || '',
+    type: (d.TYPE || '').toLowerCase(),
+    parking: pk === 'yes' ? 'yes' : pk === 'no' ? 'no' : '',
+    outdoor: od.includes('garden') ? 'garden' : (od.includes('court') || od.includes('balc')) ? 'courtyard' : od === 'none' ? 'none' : '',
+    townwalk: d.TOWNWALK || '', stationwalk: d.STATIONWALK || '',
+    photos: d.PHOTOS_URL || '', floorplan: d.FLOORPLAN_URL || '', desc: d.DESCRIPTION || '',
+    score: (d.SCORE !== undefined && d.SCORE !== '') ? parseInt(d.SCORE) : null,
+    source: detectSource(pu), url: pu, status: 'Spotted', notes: '', viewing: '', date: Date.now()
+  };
+  if (p.score === null) p.score = score(p);
+  props.unshift({ id: nid++, ...p });
+  saveProps();
+  document.getElementById('paste-url').value = '';
+  document.getElementById('waiting-banner').classList.remove('show');
+  document.getElementById('fetch-hint').textContent = 'Card added successfully.';
+  pu = '';
+  render();
+  flashNewCard();
+  return true;
+};
+
+function detectSource(url) {
+  if (!url) return 'Other';
+  if (url.includes('rightmove')) return 'Rightmove';
+  if (url.includes('zoopla')) return 'Zoopla';
+  if (url.includes('onthemarket')) return 'OnTheMarket';
+  if (url.includes('openrent')) return 'OpenRent';
+  if (url.includes('primelocation')) return 'PrimeLocation';
+  return 'Other';
+}
+
+function flashNewCard() {
+  setTimeout(() => {
+    const cards = document.querySelectorAll('.card');
+    if (cards[0]) { cards[0].classList.add('new-card'); setTimeout(() => cards[0].classList.remove('new-card'), 2000); }
+  }, 50);
+}
+
+// ── Rendering ──────────────────────────────────────────────────────────────
+function matchBadge(p) {
+  if (p.score === null || p.score === undefined) return `<span class="match-badge m-none">Unscored</span>`;
+  if (p.score === 0) return `<span class="match-badge m-fail">✕ Fail</span>`;
+  if (p.score >= 85) return `<span class="match-badge m-strong">✓ ${p.score}% Strong match</span>`;
+  if (p.score >= 70) return `<span class="match-badge m-good">✓ ${p.score}% Good match</span>`;
+  if (p.score >= 55) return `<span class="match-badge m-decent">– ${p.score}% Decent</span>`;
+  return `<span class="match-badge m-weak">⚠ ${p.score}% Weak</span>`;
+}
+
+function badgeClass(s) {
+  return { 'Spotted': 'b-spotted', 'Enquired': 'b-enquired', 'Viewing booked': 'b-viewing', 'Applied': 'b-applied', 'Rejected': 'b-rejected', 'Withdrawn': 'b-withdrawn' }[s] || 'b-spotted';
+}
+
+function mapsUrl(a) { return `https://www.google.com/maps/search/${encodeURIComponent(a)}`; }
+
+function renderStats() {
+  const t = props.length;
+  const v = props.filter(p => p.status === 'Viewing booked').length;
+  const avg = t ? Math.round(props.reduce((s, p) => s + p.price, 0) / t) : 0;
+  document.getElementById('header-stats').innerHTML = `
+    <div class="hstat"><div class="hstat-num">${t}</div><div class="hstat-label">Tracked</div></div>
+    <div class="hstat"><div class="hstat-num">${v}</div><div class="hstat-label">Viewings</div></div>
+    <div class="hstat"><div class="hstat-num">£${avg.toLocaleString()}</div><div class="hstat-label">Avg rent</div></div>`;
+}
+
+function renderBoard() {
+  let list = props.filter(p => cf === 'all' || p.status === cf);
+  if (csort === 'score') list.sort((a, b) => (b.score || 0) - (a.score || 0));
+  else if (csort === 'price_asc') list.sort((a, b) => a.price - b.price);
+  else if (csort === 'price_desc') list.sort((a, b) => b.price - a.price);
+  else list.sort((a, b) => b.date - a.date);
+
+  const board = document.getElementById('board');
+  if (!list.length) {
+    board.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🏠</div>No properties here yet.<br>Paste a URL above or add one manually.</div>';
+    return;
+  }
+  board.innerHTML = list.map(p => {
+    const vs = p.viewing ? `<div class="card-viewing">📅 ${new Date(p.viewing).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>` : '';
+    const pb = p.photos ? `<a href="${p.photos}" target="_blank" rel="noopener" title="Photos">📷 Photos</a>` : '';
+    const flb = p.floorplan ? `<a href="${p.floorplan}" target="_blank" rel="noopener" title="Floorplan">📐 Floorplan</a>` : '';
+    const lb = p.url ? `<a href="${p.url}" target="_blank" rel="noopener">↗ Listing</a>` : '';
+    return `<div class="card">
+      <div class="card-top">
+        <span class="card-source">${p.source}</span>
+        <span class="badge ${badgeClass(p.status)}">${p.status}</span>
+      </div>
+      <div class="card-addr">${p.addr}</div>
+      <div class="card-price">£${p.price.toLocaleString()} <span>/mo</span></div>
+      ${matchBadge(p)}
+      <div class="card-meta">
+        ${p.beds ? `<span class="meta-item">🛏 ${p.beds} bed</span>` : ''}
+        ${p.baths ? `<span class="meta-item">🚿 ${p.baths} bath</span>` : ''}
+        ${p.type ? `<span class="meta-item">🏠 ${p.type}</span>` : ''}
+        ${p.parking === 'yes' ? `<span class="meta-item">🚗 Parking</span>` : ''}
+        ${p.outdoor && p.outdoor !== 'none' ? `<span class="meta-item">🌿 ${p.outdoor}</span>` : ''}
+      </div>
+      ${p.desc ? `<div class="card-desc">${p.desc}</div>` : ''}
+      ${vs}
+      <div class="card-actions">
+        <button onclick="openEdit(${p.id})">✏ Edit</button>
+        ${lb}${pb}${flb}
+        <a href="${mapsUrl(p.addr)}" target="_blank" rel="noopener" title="Map">📍</a>
+        <button class="del-btn" onclick="deleteP(${p.id})">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Update map link
+  const addrs = props.map(p => p.addr).filter(Boolean);
+  document.getElementById('map-all-link').href = addrs.length ? `https://www.google.com/maps/search/${encodeURIComponent(addrs.join(' | '))}` : '#';
+}
+
+function render() { renderStats(); renderBoard(); }
+function setFilter(btn, s) { document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); cf = s; renderBoard(); }
+
+// ── Modal ──────────────────────────────────────────────────────────────────
+function clearModal() {
+  ['fa','fu','fph','ffl','fd','fn'].forEach(i => document.getElementById(i).value = '');
+  document.getElementById('fp').value = '';
+  document.getElementById('fv').value = '';
+  ['fb','fbt','fty','fpk','fod','ftw','fsw'].forEach(i => document.getElementById(i).value = '');
+  document.getElementById('fst').value = 'Spotted';
+  document.getElementById('fso').value = 'Rightmove';
+}
+
+function openManual() {
+  mm = 'add'; eid = null; clearModal();
+  document.getElementById('modal-title').textContent = 'Add property';
+  document.getElementById('modal-save-btn').textContent = 'Add property';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function openEdit(id) {
+  mm = 'edit'; eid = id;
+  const p = props.find(x => x.id === id);
+  document.getElementById('modal-title').textContent = 'Edit property';
+  document.getElementById('modal-save-btn').textContent = 'Save changes';
+  document.getElementById('fa').value = p.addr || '';
+  document.getElementById('fp').value = p.price || '';
+  document.getElementById('fst').value = p.status || 'Spotted';
+  document.getElementById('fb').value = p.beds || '';
+  document.getElementById('fbt').value = p.baths || '';
+  document.getElementById('fty').value = p.type || '';
+  document.getElementById('fpk').value = p.parking || '';
+  document.getElementById('fod').value = p.outdoor || '';
+  document.getElementById('fso').value = p.source || 'Rightmove';
+  document.getElementById('ftw').value = p.townwalk || '';
+  document.getElementById('fsw').value = p.stationwalk || '';
+  document.getElementById('fv').value = p.viewing || '';
+  document.getElementById('fu').value = p.url || '';
+  document.getElementById('fph').value = p.photos || '';
+  document.getElementById('ffl').value = p.floorplan || '';
+  document.getElementById('fd').value = p.desc || '';
+  document.getElementById('fn').value = p.notes || '';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); eid = null; mm = 'add'; }
+document.getElementById('modal-overlay').addEventListener('click', e => { if (e.target === document.getElementById('modal-overlay')) closeModal(); });
+
+function onViewingChange(val) {
+  if (!val) return;
+  document.getElementById('fst').value = 'Viewing booked';
+  if (mm !== 'edit' || !eid) return;
+  const addr = document.getElementById('fa').value.trim();
+  const price = document.getElementById('fp').value;
+  const beds = document.getElementById('fb').value;
+  const src = document.getElementById('fso').value;
+  const notes = document.getElementById('fn').value;
+  const dt = new Date(val);
+  if (typeof sendPrompt === 'function') {
+    sendPrompt(`Add a property viewing to my Google Calendar:\nTitle: "Viewing: ${addr}"\nDate/time: ${dt.toLocaleString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}\nDuration: 1 hour\nLocation: ${addr}\nDescription: ${beds} bed, £${Number(price).toLocaleString()}/mo via ${src}. Notes: ${notes || '—'}\nReminder: 1 hour before\nPlease confirm once added.`);
+  }
+}
+
+function getModalData() {
+  return { addr: document.getElementById('fa').value.trim(), price: parseInt(document.getElementById('fp').value) || 0, status: document.getElementById('fst').value, beds: document.getElementById('fb').value, baths: document.getElementById('fbt').value, type: document.getElementById('fty').value, parking: document.getElementById('fpk').value, outdoor: document.getElementById('fod').value, source: document.getElementById('fso').value, townwalk: document.getElementById('ftw').value, stationwalk: document.getElementById('fsw').value, viewing: document.getElementById('fv').value, url: document.getElementById('fu').value.trim(), photos: document.getElementById('fph').value.trim(), floorplan: document.getElementById('ffl').value.trim(), desc: document.getElementById('fd').value.trim(), notes: document.getElementById('fn').value.trim() };
+}
+
+function saveModal() {
+  const data = getModalData();
+  if (!data.addr) { alert('Please enter an address.'); return; }
+  data.score = score(data);
+  if (mm === 'edit' && eid) {
+    const i = props.findIndex(p => p.id === eid);
+    props[i] = { ...props[i], ...data };
+  } else {
+    data.date = Date.now();
+    props.unshift({ id: nid++, ...data });
+    flashNewCard();
+  }
+  saveProps();
+  closeModal();
+  render();
+}
+
+function deleteP(id) {
+  if (!confirm('Remove this property from your tracker?')) return;
+  props = props.filter(p => p.id !== id);
+  saveProps();
+  render();
+}
+
+// ── Search builder ─────────────────────────────────────────────────────────
+function toggleSearch(btn) {
+  const body = document.getElementById('search-body');
+  const arrow = btn.querySelector('.toggle-arrow');
+  const isOpen = body.classList.toggle('open');
+  arrow.classList.toggle('open', isOpen);
+}
+
+function gv(id) { return document.getElementById(id).value; }
+
+function genUrl(p) {
+  const loc = gv('sloc'), r = gv('srad'), minB = gv('sminb'), maxB = gv('smaxb'), minP = gv('sminp'), maxP = gv('smaxp'), t = gv('stype');
+  if (p === 'rightmove') {
+    const rm = RM[loc]; if (!rm) return null;
+    let u;
+    if (rm.searchLocation) {
+      u = `https://www.rightmove.co.uk/property-to-rent/find.html?searchLocation=${rm.searchLocation}&useLocationIdentifier=true&locationIdentifier=REGION%5E${rm.id}&minBedrooms=${minB}`;
+      if (maxB) u += `&maxBedrooms=${maxB}`;
+      u += `&minPrice=${minP}&maxPrice=${maxP}&radius=${parseFloat(r).toFixed(1)}&sortType=6&channel=RENT&index=0&areaSizeUnit=sqft&transactionType=LETTING`;
+    } else {
+      u = `https://www.rightmove.co.uk/property-to-rent/find.html?minBedrooms=${minB}`;
+      if (maxB) u += `&maxBedrooms=${maxB}`;
+      u += `&sortType=6&minPrice=${minP}&areaSizeUnit=sqft&channel=RENT&index=0&maxPrice=${maxP}&locationIdentifier=REGION%5E${rm.id}&transactionType=LETTING&displayLocationIdentifier=${rm.slug}.html&radius=${parseFloat(r).toFixed(1)}`;
+    }
+    if (t === 'house') u += `&propertyTypes=detached%2Csemi-detached%2Cterraced%2Cbungalow`;
+    if (t === 'flat') u += `&propertyTypes=flat`;
+    return u;
+  }
+  if (p === 'zoopla') { const z = ZP[loc]; if (!z) return null; let u = `https://www.zoopla.co.uk/to-rent/map/property/${z.slug}/?beds_min=${minB}`; if (maxB) u += `&beds_max=${maxB}`; u += `&is_retirement_home=false&is_shared_accommodation=false&is_student_accommodation=false&price_frequency=per_month&price_max=${maxP}&price_min=${minP}&q=${z.q}&radius=${r}&search_source=to-rent`; return u; }
+  if (p === 'otm') { const s = OTM[loc] || loc; let u = `https://www.onthemarket.com/to-rent/property/${s}/?min-bedrooms=${minB}`; if (maxB) u += `&max-bedrooms=${maxB}`; u += `&min-price=${minP}&max-price=${maxP}`; if (t === 'house') u += `&prop-types=detached&prop-types=semi-detached&prop-types=terraced&prop-types=bungalows`; if (t === 'flat') u += `&prop-types=flats-apartments`; u += `&radius=${parseFloat(r).toFixed(2)}&view=map-list`; return u; }
+  if (p === 'openrent') { const o = OR[loc]; if (!o) return null; const ts = t === 'house' ? '/houses' : t === 'flat' ? '/flats' : ''; let u = `https://www.openrent.co.uk/properties-to-rent/${o.slug}${ts}?term=${o.term}&area=${Math.round(parseFloat(r))}&prices_min=${minP}&prices_max=${maxP}&bedrooms_min=${minB}`; if (maxB) u += `&bedrooms_max=${maxB}`; u += `&acceptNonStudents=true&isLive=true`; return u; }
+  if (p === 'primelocation') { const pl = PL[loc]; if (!pl) return null; const ts = t === 'house' ? 'houses' : t === 'flat' ? 'flats' : 'property'; let u = `https://www.primelocation.com/to-rent/${ts}/${pl.slug}/?beds_min=${minB}`; if (maxB) u += `&beds_max=${maxB}`; u += `&price_frequency=per_month&price_min=${minP}&price_max=${maxP}`; if (t === 'house') u += `&property_sub_type=detached&property_sub_type=semi_detached&property_sub_type=terraced&property_sub_type=bungalow`; u += `&q=${pl.q}&radius=${r}&results_sort=highest_price&search_source=to-rent`; return u; }
+  return null;
+}
+
+function tp(p, el) {
+  if (sp.has(p)) { sp.delete(p); el.classList.remove('active'); }
+  else { sp.add(p); el.classList.add('active'); }
+  const n = sp.size;
+  document.getElementById('sel-count').innerHTML = n === 0 ? 'Select one or more portals to search' : `<span class="sel-info">${n} portal${n > 1 ? 's' : ''} selected</span>`;
+  bsu();
+}
+
+function bsu() {
+  bu = {};
+  sp.forEach(p => { const u = genUrl(p); if (u) bu[p] = u; });
+  renderSearchResults();
+}
+
+function renderSearchResults() {
+  const area = document.getElementById('sresults');
+  document.getElementById('oall').disabled = Object.keys(bu).length === 0;
+  if (sp.size === 0) { area.innerHTML = '<div class="sempty">Select portals above to generate search links</div>'; return; }
+  area.innerHTML = PO.filter(p => sp.has(p)).map(p => {
+    const url = bu[p];
+    return `<div class="sresult-row">
+      <span class="sresult-name">✓ ${PN[p]}</span>
+      <div class="sresult-btns">
+        <button class="sbtn" onclick="copyUrl('${p}',this)" ${!url ? 'disabled' : ''}>Copy</button>
+        <button class="sbtn open" onclick="openUrl('${p}')" ${!url ? 'disabled' : ''}>↗ Open</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function copyUrl(p, btn) {
+  const url = bu[p]; if (!url) return;
+  navigator.clipboard.writeText(url).then(() => { btn.classList.add('copied'); btn.textContent = '✓ Copied'; setTimeout(() => { btn.classList.remove('copied'); btn.textContent = 'Copy'; }, 2000); });
+}
+function openUrl(p) { const url = bu[p]; if (url) window.open(url, '_blank', 'noopener'); }
+function openAll() { PO.forEach(p => { if (bu[p]) window.open(bu[p], '_blank', 'noopener'); }); }
+
+// ── Init ───────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
